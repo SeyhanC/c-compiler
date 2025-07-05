@@ -1,32 +1,69 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Sayısal Loto - Gerçek C Derleyici (WASM)</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
+  <meta charset="UTF-8" />
+  <title>Mobil C IDE - Gerçek Derleyici (WASM)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.css" />
   <style>
-    body { background: #121212; color: white; font-family: monospace; margin: 0; padding: 0; }
-    #console { height: 75vh; background: black; padding: 10px; overflow-y: auto; }
-    button { margin: 10px; padding: 10px 20px; background: #27ae60; border: none; color: white; font-size: 16px; }
+    body { margin: 0; background: #121212; color: white; font-family: monospace; display: flex; flex-direction: column; height: 100vh; }
+    #editor { flex: 1; height: 50vh; }
+    #console { height: 40vh; background: black; overflow-y: auto; padding: 10px; }
+    button { background: #00b894; color: white; border: none; padding: 10px 20px; margin: 10px; font-size: 16px; border-radius: 4px; }
+    .CodeMirror { height: 100%; background: #1e1e1e; color: #00ffcc; font-size: 14px; }
   </style>
 </head>
 <body>
-  <button onclick="runWasm()">▶ Derle & Çalıştır</button>
-  <div id="console">🛠 libtcc.wasm yükleniyor...</div>
+  <div id="editor">// C kodunuzu buraya yazın\n#include <stdio.h>\nint main() {\n  printf("Merhaba Seyhan!\\n");\n  return 0;\n}</div>
+  <div style="text-align:center;">
+    <button onclick="run()">▶ Derle & Çalıştır</button>
+    <button onclick="saveCode()">💾 Kaydet</button>
+    <button onclick="loadCode()">📂 Yükle</button>
+  </div>
+  <div id="console">🧠 Terminal çıktı alanı</div>
 
+  <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/mode/clike/clike.js"></script>
   <script type="module">
     import { twrWasmModuleAsync, twrConsoleDiv } from 'https://cdn.jsdelivr.net/npm/twr-wasm';
+
+    const term = new Terminal();
+    term.open(document.getElementById("console"));
+
+    const editor = CodeMirror(document.getElementById("editor"), {
+      mode: "text/x-csrc",
+      lineNumbers: true
+    });
+
     let mod;
-    async function setup() {
-      const div = document.getElementById('console');
-      const con = new twrConsoleDiv(div);
+    (async () => {
+      const con = new twrConsoleDiv(document.getElementById("console"));
       mod = await twrWasmModuleAsync({ stdio: con });
-      con.writeln('✅ WASM motoru yüklendi!');
-      await mod.loadWasm('app.wasm');
+      con.writeln("✅ twr-wasm yüklendi.");
+    })();
+
+    async function run() {
+      term.clear();
+      const code = editor.getValue();
+      await mod.compileAndRunC(code);
     }
-    setup();
-    async function runWasm() {
-      await mod.callMain([]);
+
+    function saveCode() {
+      localStorage.setItem("seyhan_c_code", editor.getValue());
+      term.writeln("💾 Kod kaydedildi.");
+    }
+
+    function loadCode() {
+      const saved = localStorage.getItem("seyhan_c_code");
+      if (saved) {
+        editor.setValue(saved);
+        term.writeln("📂 Kayıtlı kod yüklendi.");
+      } else {
+        term.writeln("⚠️ Kayıtlı kod bulunamadı.");
+      }
     }
   </script>
 </body>
