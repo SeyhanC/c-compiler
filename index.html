@@ -2,41 +2,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>C Compiler (libtcc + WebAssembly Final)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>C Compiler - Mobile Final</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.css" />
   <style>
-    body { margin: 0; background: #121212; color: #eee; font-family: monospace; }
-    #editor { height: 50vh; }
-    .CodeMirror { height: 100%; background: #1e1e1e; color: #00ffcc; }
-    #terminal { height: 40vh; background: black; padding: 10px; overflow-y: auto; font-size: 14px; }
-    button { padding: 10px 20px; margin: 10px; background: #00b894; border: none; color: white; cursor: pointer; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #121212;
+      color: #fff;
+      font-family: monospace;
+    }
+    #container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #editor-container {
+      flex: 1;
+      overflow: hidden;
+    }
+    .CodeMirror {
+      height: 100%;
+      background: #1e1e1e;
+      color: #00ffcc;
+      font-size: 14px;
+    }
+    #controls {
+      padding: 10px;
+      text-align: center;
+      background: #1b1b1b;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #00b894;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #terminal {
+      height: 30vh;
+      background: black;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
-  <h2 style="text-align:center;">🧪 WebAssembly C Compiler (libtcc - Final Entegre)</h2>
-  <div id="editor">// Kodunuzu buraya yazın
+  <div id="container">
+    <div id="editor-container">
+      <textarea id="editor">// Mobil uyumlu C editörü
 #include <stdio.h>
 int main() {
   printf("Merhaba Seyhan!\n");
   return 0;
-}</div>
-  <div style="text-align:center;">
-    <button onclick="compile()">💻 Derle & Çalıştır</button>
+}</textarea>
+    </div>
+    <div id="controls">
+      <button onclick="compile()">💻 Derle & Çalıştır</button>
+    </div>
+    <div id="terminal"></div>
   </div>
-  <div id="terminal"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/mode/clike/clike.js"></script>
   <script>
     const term = new Terminal();
-    term.open(document.getElementById('terminal'));
-    term.writeln('Hazır: C kodunuzu yazın ve çalıştırın.');
+    term.open(document.getElementById("terminal"));
+    term.writeln("📟 Mobil terminal başlatıldı...");
 
-    const editor = CodeMirror(document.getElementById("editor"), {
+    const editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
       mode: "text/x-csrc",
       lineNumbers: true,
       theme: "default"
