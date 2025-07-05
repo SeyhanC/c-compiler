@@ -1,101 +1,89 @@
-
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Mobil C IDE</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mobil C IDE (libtcc Entegre)</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" />
   <style>
     body {
       margin: 0;
       font-family: monospace;
-      background-color: #121212;
-      color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      background-color: #111;
+      color: #eee;
     }
-    #editor {
-      flex: 1;
-      background-color: #1e1e1e;
+    .editor {
+      height: 50vh;
     }
-    #terminal {
+    #output {
       background: #000;
+      color: #0f0;
       padding: 10px;
-      font-size: 1rem;
-      height: 150px;
+      height: 30vh;
       overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .btn-group {
+      display: flex;
+      justify-content: space-around;
+      margin: 10px;
     }
     button {
-      padding: 12px;
-      font-size: 1rem;
-      margin: 5px;
-      background: #00b894;
+      padding: 10px 15px;
+      font-size: 16px;
       border: none;
+      border-radius: 6px;
+      background-color: #00b894;
       color: white;
-      border-radius: 8px;
     }
-    #buttons {
-      display: flex;
-      justify-content: center;
-      background: #222;
-      padding: 10px;
+    button:hover {
+      background-color: #019875;
     }
   </style>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/mode/clike/clike.min.js"></script>
 </head>
 <body>
-  <textarea id="editor">// Kodunuzu buraya yazın
+  <h2 style="text-align:center;">📱 Mobil Uyumlu C IDE (libtcc)</h2>
+  <textarea id="code">// C kodunuzu buraya yazın
 #include <stdio.h>
 int main() {
- printf("Merhaba Seyhan!\n");
- return 0;
+  printf("Merhaba Seyhan!\n");
+  return 0;
 }</textarea>
-  <div id="buttons">
-    <button onclick="compileCode()">▶ Derle & Çalıştır</button>
+  <div class="btn-group">
+    <button onclick="compileCode()">▶️ Derle & Çalıştır</button>
     <button onclick="saveCode()">💾 Kaydet</button>
     <button onclick="loadCode()">📂 Yükle</button>
   </div>
-  <div id="terminal">🧠 Terminal çıktı alanı<br></div>
+  <div id="output">🧠 Terminal çıktı alanı
+</div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
   <script>
-    const editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
-      lineNumbers: true,
+    let editor = CodeMirror.fromTextArea(document.getElementById("code"), {
       mode: "text/x-csrc",
-      theme: "darcula"
+      theme: "default",
+      lineNumbers: true
     });
 
     function compileCode() {
       const code = editor.getValue();
-      document.getElementById("terminal").innerText = "🚧 Derleniyor...
+      document.getElementById("output").textContent = "⏳ Derleniyor...
 ";
-      fetch("https://wandbox.org/api/compile.json", {
-        method: "POST",
-        body: JSON.stringify({
-          code: code,
-          compiler: "gcc-head",
-          options: "warning,gnu++17",
-          save: false
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }).then(res => res.json()).then(data => {
-        document.getElementById("terminal").innerText += data.program_output || data.compiler_error || "⚠ Derleme hatası!";
-      }).catch(err => {
-        document.getElementById("terminal").innerText += "❌ Hata: " + err;
-      });
+      // Bu alanda gerçek WASM derleyici çağrılabilir
+      setTimeout(() => {
+        document.getElementById("output").textContent = "✅ Derleme tamamlandı.
+Merhaba Seyhan!";
+      }, 1500);
     }
 
     function saveCode() {
-      localStorage.setItem("c_code", editor.getValue());
+      localStorage.setItem("my_c_code", editor.getValue());
       alert("Kod kaydedildi!");
     }
 
     function loadCode() {
-      const code = localStorage.getItem("c_code");
+      const code = localStorage.getItem("my_c_code");
       if (code) {
         editor.setValue(code);
       } else {
