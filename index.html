@@ -1,122 +1,93 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>C Compiler WebAssembly (Gerçek Entegre)</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.css" />
+  <title>6/90 Loto Kolon Üretici</title>
   <style>
-    body { margin: 0; background: #121212; color: #fff; font-family: monospace; height: 100vh; display: flex; flex-direction: column; }
-    #header-panel {
-      background: #1e1e1e;
-      padding: 10px;
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-    }
-    .header-btn {
-      background: #2d3436;
-      color: #00cec9;
-      border: 1px solid #00cec9;
-      border-radius: 5px;
-      padding: 5px 10px;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    #editor-container {
-      flex: 1;
-      overflow: hidden;
-    }
-    .CodeMirror {
-      height: 100%;
-      background: #1e1e1e;
-      color: #00ffcc;
-      font-size: 14px;
-    }
-    #controls {
-      background: #1b1b1b;
-      padding: 10px;
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: 'Courier New', monospace;
       text-align: center;
+      padding: 20px;
     }
-    #terminal {
-      height: 30vh;
-      background: black;
-      font-size: 14px;
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+      margin: 10px;
+      border-radius: 8px;
+      border: none;
     }
     button {
-      padding: 10px 20px;
-      font-size: 14px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-      background: #0984e3;
+      background-color: #00c896;
       color: white;
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.2rem;
+      white-space: pre-line;
+    }
+    .ball {
+      display: inline-block;
+      background-color: #222;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      line-height: 40px;
+      margin: 3px;
+      font-weight: bold;
+      color: #00eaff;
     }
   </style>
 </head>
 <body>
-  <div id="header-panel">
-    <div class="header-btn" onclick="insertHeader('#include <stdio.h>')">stdio.h</div>
-    <div class="header-btn" onclick="insertHeader('#include <stdlib.h>')">stdlib.h</div>
-    <div class="header-btn" onclick="insertHeader('#include <math.h>')">math.h</div>
-    <div class="header-btn" onclick="insertHeader('#include <string.h>')">string.h</div>
-  </div>
-
-  <div id="editor-container">
-    <textarea id="code">// Gerçek libtcc.wasm entegrasyonu
-#include <stdio.h>
-int main() {
-  printf("Merhaba Seyhan!\n");
-  return 0;
-}</textarea>
-  </div>
-
-  <div id="controls">
-    <button onclick="compile()">💻 Derle & Çalıştır</button>
-    <button onclick="insertHeader('#include <stdio.h>')">📚 stdio ekle</button>
-  </div>
-
-  <div id="terminal"></div>
-
-  <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/mode/clike/clike.js"></script>
+  <h1>🎲 6/90 Sayısal Loto Üretici</h1>
+  <p>Kaç kolon üretmek istersiniz?</p>
+  <input type="number" id="kolon" min="1" max="100" value="1"/>
+  <button onclick="generate()">Kolonları Üret</button>
+  <div class="result" id="output"></div>
 
   <script>
-    const term = new Terminal();
-    term.open(document.getElementById("terminal"));
-    term.writeln("🧠 Gerçek libtcc.wasm (örnekle çalıştırma modunda)");
+    let w = Date.now() & 0xffff;
+    let z = (Date.now() >> 8) & 0xffff;
 
-    const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
-      mode: "text/x-csrc",
-      lineNumbers: true,
-      theme: "default"
-    });
-
-    function insertHeader(header) {
-      const doc = editor.getDoc();
-      const cursor = doc.getCursor();
-      doc.replaceRange(header + "\n", { line: 0, ch: 0 });
+    function marsaglia_rand() {
+      z = 36969 * (z & 0xffff) + (z >>> 16);
+      w = 18000 * (w & 0xffff) + (w >>> 16);
+      return ((z << 16) + w) >>> 0;
     }
 
-    function compile() {
-      term.clear();
-      term.writeln("⚙️ WebAssembly motoru başlatılıyor...");
-      const code = editor.getValue();
+    function generate_column(index) {
+      const used = new Set();
+      const nums = [];
 
-      if (code.includes("printf")) {
-        const match = code.match(/printf\(["'](.+?)\\n?["']\)/);
-        if (match && match[1]) {
-          term.writeln("📤 Çıktı:");
-          term.writeln(match[1]);
-        } else {
-          term.writeln("📤 Çıktı: printf bulundu ancak içerik okunamadı.");
+      while (nums.length < 6) {
+        let n = marsaglia_rand() % 90 + 1;
+        if (!used.has(n)) {
+          used.add(n);
+          nums.push(n);
         }
-      } else {
-        term.writeln("🛑 printf fonksiyonu bulunamadı.");
       }
+
+      nums.sort((a, b) => a - b);
+      let row = String.fromCharCode(65 + index) + ": ";
+      nums.forEach(n => {
+        row += `<span class="ball">${n.toString().padStart(2, '0')}</span>`;
+      });
+      return row;
+    }
+
+    function generate() {
+      let kolon = parseInt(document.getElementById("kolon").value);
+      if (kolon < 1 || kolon > 100) return;
+      let output = '';
+      for (let i = 0; i < kolon; i++) {
+        output += generate_column(i) + '\n';
+      }
+      document.getElementById("output").innerHTML = output;
     }
   </script>
 </body>
