@@ -1,68 +1,105 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Mobil C IDE - Gerçek Derleyici (WASM)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.css" />
+  <meta charset="UTF-8">
+  <title>Mobil C IDE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { margin: 0; background: #121212; color: white; font-family: monospace; display: flex; flex-direction: column; height: 100vh; }
-    #editor { flex: 1; height: 50vh; }
-    #console { height: 40vh; background: black; overflow-y: auto; padding: 10px; }
-    button { background: #00b894; color: white; border: none; padding: 10px 20px; margin: 10px; font-size: 16px; border-radius: 4px; }
-    .CodeMirror { height: 100%; background: #1e1e1e; color: #00ffcc; font-size: 14px; }
+    body {
+      margin: 0;
+      font-family: monospace;
+      background-color: #121212;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    #editor {
+      flex: 1;
+      background-color: #1e1e1e;
+    }
+    #terminal {
+      background: #000;
+      padding: 10px;
+      font-size: 1rem;
+      height: 150px;
+      overflow-y: auto;
+    }
+    button {
+      padding: 12px;
+      font-size: 1rem;
+      margin: 5px;
+      background: #00b894;
+      border: none;
+      color: white;
+      border-radius: 8px;
+    }
+    #buttons {
+      display: flex;
+      justify-content: center;
+      background: #222;
+      padding: 10px;
+    }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.10/mode/clike/clike.min.js"></script>
 </head>
 <body>
-  <div id="editor">// C kodunuzu buraya yazın\n#include <stdio.h>\nint main() {\n  printf("Merhaba Seyhan!\\n");\n  return 0;\n}</div>
-  <div style="text-align:center;">
-    <button onclick="run()">▶ Derle & Çalıştır</button>
+  <textarea id="editor">// Kodunuzu buraya yazın
+#include <stdio.h>
+int main() {
+ printf("Merhaba Seyhan!\n");
+ return 0;
+}</textarea>
+  <div id="buttons">
+    <button onclick="compileCode()">▶ Derle & Çalıştır</button>
     <button onclick="saveCode()">💾 Kaydet</button>
     <button onclick="loadCode()">📂 Yükle</button>
   </div>
-  <div id="console">🧠 Terminal çıktı alanı</div>
+  <div id="terminal">🧠 Terminal çıktı alanı<br></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/mode/clike/clike.js"></script>
-  <script type="module">
-    import { twrWasmModuleAsync, twrConsoleDiv } from 'https://cdn.jsdelivr.net/npm/twr-wasm';
-
-    const term = new Terminal();
-    term.open(document.getElementById("console"));
-
-    const editor = CodeMirror(document.getElementById("editor"), {
+  <script>
+    const editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+      lineNumbers: true,
       mode: "text/x-csrc",
-      lineNumbers: true
+      theme: "darcula"
     });
 
-    let mod;
-    (async () => {
-      const con = new twrConsoleDiv(document.getElementById("console"));
-      mod = await twrWasmModuleAsync({ stdio: con });
-      con.writeln("✅ twr-wasm yüklendi.");
-    })();
-
-    async function run() {
-      term.clear();
+    function compileCode() {
       const code = editor.getValue();
-      await mod.compileAndRunC(code);
+      document.getElementById("terminal").innerText = "🚧 Derleniyor...
+";
+      fetch("https://wandbox.org/api/compile.json", {
+        method: "POST",
+        body: JSON.stringify({
+          code: code,
+          compiler: "gcc-head",
+          options: "warning,gnu++17",
+          save: false
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }).then(res => res.json()).then(data => {
+        document.getElementById("terminal").innerText += data.program_output || data.compiler_error || "⚠ Derleme hatası!";
+      }).catch(err => {
+        document.getElementById("terminal").innerText += "❌ Hata: " + err;
+      });
     }
 
     function saveCode() {
-      localStorage.setItem("seyhan_c_code", editor.getValue());
-      term.writeln("💾 Kod kaydedildi.");
+      localStorage.setItem("c_code", editor.getValue());
+      alert("Kod kaydedildi!");
     }
 
     function loadCode() {
-      const saved = localStorage.getItem("seyhan_c_code");
-      if (saved) {
-        editor.setValue(saved);
-        term.writeln("📂 Kayıtlı kod yüklendi.");
+      const code = localStorage.getItem("c_code");
+      if (code) {
+        editor.setValue(code);
       } else {
-        term.writeln("⚠️ Kayıtlı kod bulunamadı.");
+        alert("Kayıtlı kod bulunamadı.");
       }
     }
   </script>
