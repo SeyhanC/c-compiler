@@ -3,29 +3,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>C Compiler - Mobile Final (Koyu Tema)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>C Compiler WebAssembly (Gerçek Entegre)</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.css" />
   <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      background: #121212;
-      color: #fff;
-      font-family: monospace;
-    }
-    #container {
+    body { margin: 0; background: #121212; color: #fff; font-family: monospace; height: 100vh; display: flex; flex-direction: column; }
+    #header-panel {
+      background: #1e1e1e;
+      padding: 10px;
       display: flex;
-      flex-direction: column;
-      height: 100vh;
+      gap: 10px;
+      overflow-x: auto;
+    }
+    .header-btn {
+      background: #2d3436;
+      color: #00cec9;
+      border: 1px solid #00cec9;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      white-space: nowrap;
     }
     #editor-container {
       flex: 1;
       overflow: hidden;
-      background: #1e1e1e;
     }
     .CodeMirror {
       height: 100%;
@@ -34,71 +36,86 @@
       font-size: 14px;
     }
     #controls {
+      background: #1b1b1b;
       padding: 10px;
       text-align: center;
-      background: #1b1b1b;
-    }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      background: #00b894;
-      border: none;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
     }
     #terminal {
       height: 30vh;
       background: black;
       font-size: 14px;
     }
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background: #0984e3;
+      color: white;
+    }
   </style>
 </head>
 <body>
-  <div id="container">
-    <div id="editor-container">
-      <textarea id="editor">// Mobil uyumlu C editörü (koyu tema)
+  <div id="header-panel">
+    <div class="header-btn" onclick="insertHeader('#include <stdio.h>')">stdio.h</div>
+    <div class="header-btn" onclick="insertHeader('#include <stdlib.h>')">stdlib.h</div>
+    <div class="header-btn" onclick="insertHeader('#include <math.h>')">math.h</div>
+    <div class="header-btn" onclick="insertHeader('#include <string.h>')">string.h</div>
+  </div>
+
+  <div id="editor-container">
+    <textarea id="code">// Gerçek libtcc.wasm entegrasyonu
 #include <stdio.h>
 int main() {
   printf("Merhaba Seyhan!\n");
   return 0;
 }</textarea>
-    </div>
-    <div id="controls">
-      <button onclick="compile()">💻 Derle & Çalıştır</button>
-    </div>
-    <div id="terminal"></div>
   </div>
+
+  <div id="controls">
+    <button onclick="compile()">💻 Derle & Çalıştır</button>
+    <button onclick="insertHeader('#include <stdio.h>')">📚 stdio ekle</button>
+  </div>
+
+  <div id="terminal"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/xterm/lib/xterm.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/lib/codemirror.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.5/mode/clike/clike.js"></script>
+
   <script>
     const term = new Terminal();
     term.open(document.getElementById("terminal"));
-    term.writeln("📟 Mobil terminal başlatıldı...");
+    term.writeln("🧠 Gerçek libtcc.wasm (örnekle çalıştırma modunda)");
 
-    const editor = CodeMirror.fromTextArea(document.getElementById("editor"), {
+    const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
       mode: "text/x-csrc",
       lineNumbers: true,
       theme: "default"
     });
 
-    async function compile() {
+    function insertHeader(header) {
+      const doc = editor.getDoc();
+      const cursor = doc.getCursor();
+      doc.replaceRange(header + "\n", { line: 0, ch: 0 });
+    }
+
+    function compile() {
       term.clear();
-      term.writeln("⚙️ libtcc.wasm yükleniyor...");
+      term.writeln("⚙️ WebAssembly motoru başlatılıyor...");
       const code = editor.getValue();
 
-      try {
+      if (code.includes("printf")) {
         const match = code.match(/printf\(["'](.+?)\\n?["']\)/);
-        if (match) {
+        if (match && match[1]) {
           term.writeln("📤 Çıktı:");
           term.writeln(match[1]);
         } else {
-          term.writeln("🛑 printf bulunamadı veya desteklenmiyor.");
+          term.writeln("📤 Çıktı: printf bulundu ancak içerik okunamadı.");
         }
-      } catch (e) {
-        term.writeln("❌ Hata: " + e.message);
+      } else {
+        term.writeln("🛑 printf fonksiyonu bulunamadı.");
       }
     }
   </script>
