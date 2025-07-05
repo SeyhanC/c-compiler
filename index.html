@@ -1,93 +1,32 @@
-
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>6/90 Loto Kolon Üretici</title>
+  <meta charset="UTF-8">
+  <title>Sayısal Loto - Gerçek C Derleyici (WASM)</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css">
   <style>
-    body {
-      background-color: #121212;
-      color: #fff;
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      padding: 20px;
-    }
-    input, button {
-      padding: 10px;
-      font-size: 1rem;
-      margin: 10px;
-      border-radius: 8px;
-      border: none;
-    }
-    button {
-      background-color: #00c896;
-      color: white;
-      cursor: pointer;
-    }
-    .result {
-      margin-top: 20px;
-      font-size: 1.2rem;
-      white-space: pre-line;
-    }
-    .ball {
-      display: inline-block;
-      background-color: #222;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      line-height: 40px;
-      margin: 3px;
-      font-weight: bold;
-      color: #00eaff;
-    }
+    body { background: #121212; color: white; font-family: monospace; margin: 0; padding: 0; }
+    #console { height: 75vh; background: black; padding: 10px; overflow-y: auto; }
+    button { margin: 10px; padding: 10px 20px; background: #27ae60; border: none; color: white; font-size: 16px; }
   </style>
 </head>
 <body>
-  <h1>🎲 6/90 Sayısal Loto Üretici</h1>
-  <p>Kaç kolon üretmek istersiniz?</p>
-  <input type="number" id="kolon" min="1" max="100" value="1"/>
-  <button onclick="generate()">Kolonları Üret</button>
-  <div class="result" id="output"></div>
+  <button onclick="runWasm()">▶ Derle & Çalıştır</button>
+  <div id="console">🛠 libtcc.wasm yükleniyor...</div>
 
-  <script>
-    let w = Date.now() & 0xffff;
-    let z = (Date.now() >> 8) & 0xffff;
-
-    function marsaglia_rand() {
-      z = 36969 * (z & 0xffff) + (z >>> 16);
-      w = 18000 * (w & 0xffff) + (w >>> 16);
-      return ((z << 16) + w) >>> 0;
+  <script type="module">
+    import { twrWasmModuleAsync, twrConsoleDiv } from 'https://cdn.jsdelivr.net/npm/twr-wasm';
+    let mod;
+    async function setup() {
+      const div = document.getElementById('console');
+      const con = new twrConsoleDiv(div);
+      mod = await twrWasmModuleAsync({ stdio: con });
+      con.writeln('✅ WASM motoru yüklendi!');
+      await mod.loadWasm('app.wasm');
     }
-
-    function generate_column(index) {
-      const used = new Set();
-      const nums = [];
-
-      while (nums.length < 6) {
-        let n = marsaglia_rand() % 90 + 1;
-        if (!used.has(n)) {
-          used.add(n);
-          nums.push(n);
-        }
-      }
-
-      nums.sort((a, b) => a - b);
-      let row = String.fromCharCode(65 + index) + ": ";
-      nums.forEach(n => {
-        row += `<span class="ball">${n.toString().padStart(2, '0')}</span>`;
-      });
-      return row;
-    }
-
-    function generate() {
-      let kolon = parseInt(document.getElementById("kolon").value);
-      if (kolon < 1 || kolon > 100) return;
-      let output = '';
-      for (let i = 0; i < kolon; i++) {
-        output += generate_column(i) + '\n';
-      }
-      document.getElementById("output").innerHTML = output;
+    setup();
+    async function runWasm() {
+      await mod.callMain([]);
     }
   </script>
 </body>
